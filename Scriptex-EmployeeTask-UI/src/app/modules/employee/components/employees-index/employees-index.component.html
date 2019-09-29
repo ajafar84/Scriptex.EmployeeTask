@@ -1,0 +1,143 @@
+<div class="d-flex justify-content-between align-items-center py-4 px-5">
+  <h1 class="text-primary text-center mb-0">قائمة الموظفين</h1>
+  <a [routerLink]="['/employee/add']" class="btn btn-primary">إضافة موظف</a>
+</div>
+
+<div class="row mx-0">
+  <div class="col-12">
+    <div class="card border-0 box-shadow">
+
+      <div style="overflow: auto;" class="card-body p-0">
+        <form [formGroup]="searchForm" (ngSubmit)="search()">
+          <div class="row mx-0 inner-table">
+            <!-- Table -->
+            <div class="m_datatable w-100 ">
+              <p-table [value]="dataItems" [paginator]="true" [totalRecords]="pagingMetaData?.TotalItemCount"
+                [rows]="pagingMetaData?.PageSize ? pagingMetaData?.PageSize : 10" [autoLayout]="true"
+                [responsive]="true" [first]="pagingMetaData?.FirstItemOnPage" [loading]="progressSpinner"
+                [columns]="cols" [lazy]="true" (onLazyLoad)="onTableLazyLoad($event)" [scrollable]="true" class="w-100">
+
+                <!-- Header -->
+                <ng-template pTemplate="header" let-columns>
+
+                  <!-- Header Text  -->
+                  <tr>
+                    <th *ngFor="let col of cols | hiddenColumnFilter" [pSortableColumn]="(col.Sortable || col.Sortable === undefined) &&
+                        col.Type !== 'checkBox' && col.Type !== 'action' ? col.Field : null">
+                      <!-- Select All Check Box -->
+                      <ng-container *ngIf="col.Type === 'checkBox'">
+                        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                      </ng-container>
+                      <!-- Column Header (Data and Action Fields)  -->
+                      <ng-container *ngIf="col.Type !== 'checkBox'">
+                        {{ col.Header}}
+                        <!-- Sort Icon -->
+                        <p-sortIcon [field]="col.Field" *ngIf="(col.Sortable || col.Sortable === undefined) &&
+                            col.Type !== 'action'"></p-sortIcon>
+                      </ng-container>
+                    </th>
+                  </tr>
+
+                  <!-- search Fields-->
+                  <tr id="searchRow" formArrayName="SearchFields">
+                    <th *ngFor="let col of cols | hiddenColumnFilter let i = index" pResizableColumn>
+
+                      <!-- Handle Searchable Fields -->
+                      <div [formGroupName]="i"
+                        *ngIf="((col.Searchable || col.Searchable === undefined) &&  col.Type !== 'action')"
+                        class="grid-search">
+                        <!-- Search General Data Fields -->
+                        <ng-container *ngIf="!col.Type || col.Type === 'data'">
+                          <input formControlName="FieldName" type="text" class="form-control" [value]="col.Field"
+                            hidden>
+                          <!-- Handle Data Fields -->
+                          <input *ngIf="col.SearchType !== 'select'" formControlName="Value" [type]="col.SearchType"
+                            class="form-control">
+                          <!-- Search Operators List -->
+                          <select formControlName="Operator" class="form-control">
+                            <option *ngFor="let searchOperator of searchOperators" [value]="searchOperator.Operator">
+                              {{searchOperator.ArabicText}}
+                            </option>
+                          </select>
+                        </ng-container>
+                      </div>
+
+                      <!-- Search action button fields -->
+                      <ng-container *ngIf="col.Type === 'action'">
+                        <div class="grid-buttons">
+                          <!-- Search Button -->
+                          <button type="submit" class="btn px-2 btn-primary border-0" title="search in gride">
+                            <i class="la la-search"></i>
+                          </button>
+                          <!-- Cancel/Reset Button -->
+                          <button title="reset" (click)="onSearchReset()"
+                            class="btn btn-secondary px-2 bg-transparent border-0">
+                            <i class="fa fa-times"></i>
+                          </button>
+                        </div>
+                      </ng-container>
+                    </th>
+                  </tr>
+
+                </ng-template>
+
+                <!-- Body -->
+                <ng-template style="width: 30px" pTemplate="body" let-dataItem let-columns="columns">
+                  <tr>
+                    <td *ngFor="let column of columns | hiddenColumnFilter">
+
+                      <!-- Handle general data fields -->
+                      <ng-container *ngIf="!column.Type || column.Type === 'data'">
+                        {{ !column.Pipe ? dataItem[column.Field] : column.Pipe === 'date' ? (dataItem[column.Field] | date: column.PipeOptions.Format)
+                          : column.Pipe === 'currency' ? (dataItem[column.Field] | currency: column.PipeOptions.CurrencyCode : column.PipeOptions.Display
+                          : column.PipeOptions.DigitsInfo : column.PipeOptions.Locale) : dataItem[column.Field] }}
+                      </ng-container>
+
+                      <!-- Handle binary status data fields -->
+                      <ng-container *ngIf="column.Type === 'status'">
+                        <span class="m-badge status" [ngClass]="{
+                            'm-badge--success': !dataItem[column.Field],
+                            'm-badge--danger': dataItem[column.Field] }">
+                          <p-inputSwitch (onChange)="changeStatus(dataItem['Id'],$event)"
+                            [(ngModel)]="dataItem[column.Field]" [ngModelOptions]="{standalone: true}"></p-inputSwitch>
+                        </span>
+                      </ng-container>
+
+                      <!-- Handle checkbox fields -->
+                      <ng-container *ngIf="column.Type === 'checkBox'">
+                        <p-tableCheckbox [value]="dataItem">
+                        </p-tableCheckbox>
+                      </ng-container>
+
+                      <!-- Handle action button fields -->
+                      <ng-container *ngIf="column.Type === 'action'">
+                        <a class="btn border-0 btn-primary mx-1 px-1 py-0" title="تعديل"
+                          [routerLink]="['/employee/edit']" [queryParams]="{Id:dataItem['Id']}">
+                          <i class="la la-edit"></i>
+                        </a>
+                        <button class="btn border-0 btn-danger mx-1 px-1 py-0" (click)="deleteEmployee(dataItem['Id'])"
+                          title="حذف">
+                          <i class="la la-trash-o"></i>
+                        </button>
+
+                      </ng-container>
+                    </td>
+                  </tr>
+                </ng-template>
+
+                <!-- Empty Message -->
+                <ng-template pTemplate="emptymessage" let-columns>
+                  <tr *ngIf="!progressSpinner">
+                    <td [attr.colspan]="columns?.length" class="empty-grid-table">
+                      لا يوجد موظفين
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
