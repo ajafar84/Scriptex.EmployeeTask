@@ -28,8 +28,7 @@
               <select formControlName="JobId" class="select2 form-control custom-select"
                 style="width: 100%; height:36px;"
                 [ngClass]="{'border-danger': form.get('JobId').touched && form.get('JobId').errors}">
-                <option *ngFor="let job of employeeCreatePageVM?.JobsVM" [selected]="job.Id === form.get('JobId').value"
-                  value={{job.Id}}>{{job.Name}}</option>
+                <option *ngFor="let job of employeeCreatePageVM?.JobsVM" value={{job.Id}}>{{job.Name}}</option>
               </select>
               <small *ngIf="form.get('JobId').touched && form.get('JobId').errors?.required"
                 class="form-text danger text-right">
