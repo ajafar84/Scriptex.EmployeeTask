@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { ProgressSpinnerService } from '@shared/services/progress-spinner.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-layout',
@@ -6,10 +8,10 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./layout.component.scss']
 })
 export class LayoutComponent implements OnInit {
+  showProgressSpinner: Observable<boolean> = this.progressSpinnerService
+    .isLoading;
 
-  constructor() { }
+  constructor(private progressSpinnerService: ProgressSpinnerService) {}
 
-  ngOnInit() {
-  }
-
+  ngOnInit() {}
 }

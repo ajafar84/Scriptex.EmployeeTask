@@ -12,12 +12,13 @@ import { SearchType } from '@shared/enums/search-type.enum';
 import { EmployeeService } from '../../services/employee.service';
 import { EmployeePostVM } from '../../models/employee/employee-post';
 import { HelperFunctions } from '@shared/helpers/helper-functions';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-employees-index',
   templateUrl: './employees-index.component.html',
   styleUrls: ['./employees-index.component.scss'],
-  providers: [EmployeeService]
+  providers: [EmployeeService],
 })
 export class EmployeesIndexComponent implements OnInit {
   dataItems: any[];
@@ -38,10 +39,10 @@ export class EmployeesIndexComponent implements OnInit {
   constructor(
     private dynamicSearchService: DynamicSearchService,
     private employeeService: EmployeeService,
-    private helper: HelperFunctions
+    private helper: HelperFunctions,
+    private activatedRoute: ActivatedRoute,
   ) {
     this.searchModel = {};
-    this.progressSpinner = true;
     this.subscription = new Subscription();
     this.actions = [];
   }
@@ -64,51 +65,59 @@ export class EmployeesIndexComponent implements OnInit {
       { Field: 'Mobile', Header: 'الموبايل' },
       {
         Field: 'Email',
-        Header: 'الإيميل'
+        Header: 'الإيميل',
       },
       {
         Field: 'CreationDate',
         Header: 'تاريخ الإضافة',
         Pipe: ColumnPipe.Date,
         PipeOptions: this.helper.getDefaultDatePipeOptions(),
-        SearchType: SearchType.Date
+        SearchType: SearchType.Date,
       },
       {
         Field: 'IsActive',
         Header: 'الحالة',
         Searchable: false,
-        Type: ColumnType.Status
+        Type: ColumnType.Status,
       },
       {
         Field: 'Action',
         Header: 'الإجراءات',
         Searchable: false,
-        Type: ColumnType.Action
-      }
+        Type: ColumnType.Action,
+      },
     ];
   }
 
   getData() {
-    this.progressSpinner = true;
+    // this.progressSpinner = true;
 
     this.subscription.add(
-      this.employeeService.getListPage(this.searchModel).subscribe(
-        result => {
-          if (result.IsSuccess) {
-            this.dataItems = result.Data.GridItemsVM;
-            this.pagingMetaData = result.Data.PagingMetaData;
-            console.log(this.dataItems);
-          }
-        },
-        () => (this.progressSpinner = false),
-        () => (this.progressSpinner = false)
-      )
+      this.activatedRoute.data.subscribe(response => {
+        console.log(response);
+        this.dataItems = response.routeResolver.Data.GridItemsVM;
+        this.pagingMetaData = response.routeResolver.Data.PagingMetaData;
+      }),
     );
+
+    // this.subscription.add(
+    //   this.employeeService.getListPage(this.searchModel).subscribe(
+    //     result => {
+    //       if (result.IsSuccess) {
+    //         this.dataItems = result.Data.GridItemsVM;
+    //         this.pagingMetaData = result.Data.PagingMetaData;
+    //         console.log(this.dataItems);
+    //       }
+    //     },
+    //     () => (this.progressSpinner = false),
+    //     () => (this.progressSpinner = false)
+    //   )
+    // );
   }
 
   onTableLazyLoad(event: any) {
     this.dynamicSearchService.lazy(event, this.searchModel, () =>
-      this.getData()
+      this.getData(),
     );
   }
 
@@ -119,7 +128,7 @@ export class EmployeesIndexComponent implements OnInit {
 
   search() {
     this.dynamicSearchService.search(this.searchForm, this.searchModel, () =>
-      this.getData()
+      this.getData(),
     );
   }
 
@@ -132,7 +141,7 @@ export class EmployeesIndexComponent implements OnInit {
           }
         },
         () => (this.progressSpinner = false),
-        () => (this.progressSpinner = false)
+        () => (this.progressSpinner = false),
       );
     }
   }
@@ -147,7 +156,7 @@ export class EmployeesIndexComponent implements OnInit {
       JobId: null,
       Mobile: null,
       Name: null,
-      NationalId: null
+      NationalId: null,
     };
     this.employeeService.changeStatus(postedVM).subscribe(
       result => {
@@ -156,7 +165,7 @@ export class EmployeesIndexComponent implements OnInit {
         }
       },
       () => (this.progressSpinner = false),
-      () => (this.progressSpinner = false)
+      () => (this.progressSpinner = false),
     );
   }
 }
